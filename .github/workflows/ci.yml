@@ -4,8 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
-  release:
-    types: [published]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -32,14 +31,17 @@ jobs:
             --label "org.opencontainers.image.revision=$GITHUB_SHA" \
             --tag app-ci:tested .
           docker run --detach --name app-check -p 127.0.0.1:18080:8080 app-ci:tested
-          curl --fail --silent --show-error --retry 10 --retry-connrefused \
+          curl --fail --silent --show-error --retry 10 --retry-all-errors \
             --retry-delay 1 --max-time 5 http://127.0.0.1:18080/ > /dev/null
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs app-check || true
       - name: Save the tested image for publishing
-        if: github.event_name == 'release'
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         run: docker save -o "$RUNNER_TEMP/image.tar" app-ci:tested
       - name: Pass image to publish job
         id: artifact
-        if: github.event_name == 'release'
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tested-image-${{ github.run_attempt }}
@@ -48,7 +50,7 @@ jobs:
           retention-days: 1
 
   publish:
-    if: github.event_name == 'release'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -67,9 +69,9 @@ jobs:
         id: push
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          [[ "$RELEASE_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || { echo 'Release tag must be a valid Docker tag'; exit 1; }
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ && ${#RELEASE_TAG} -le 128 ]] || { echo 'Expected vX.Y.Z or vX.Y.Z-suffix'; exit 1; }
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
           docker load --input "$RUNNER_TEMP/tested/image.tar"
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
@@ -91,13 +93,15 @@ jobs:
       - name: Attach the digest NAS will deploy
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
           IMAGE: ${{ needs.publish.outputs.image }}
         run: |
           printf '%s\n' "$IMAGE" > image.txt
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fxq 'image.txt'; then
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern image.txt --dir existing
             cmp existing/image.txt image.txt
           else
-            gh release upload "$RELEASE_TAG" image.txt --repo "$GITHUB_REPOSITORY"
+            args=(--verify-tag --generate-notes)
+            if [[ "$RELEASE_TAG" == *-* ]]; then args+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" image.txt --repo "$GITHUB_REPOSITORY" "${args[@]}"
           fi
