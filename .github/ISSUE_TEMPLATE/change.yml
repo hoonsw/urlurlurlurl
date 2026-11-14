@@ -1,0 +1,17 @@
+name: 기능·개선 요청
+description: 원하는 사용 장면과 완료 조건을 기록합니다.
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 어떤 일을 하고 싶은가요?
+      placeholder: 누가 어떤 상황에서 무엇을 하면 어떤 결과를 얻어야 하는지 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 완료를 어떻게 확인할까요?
+      placeholder: 직접 확인할 수 있는 입력과 예상 결과를 한 가지 적어주세요.
+    validations:
+      required: true

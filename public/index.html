@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>urlurlurlurl</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page">
+    <h1>urlurlurlurl</h1>
+    <p class="tagline">URL을 늘립니다.</p>
+
+    <form class="form" data-form>
+      <label class="sr-only" for="url">URL</label>
+      <input
+        id="url"
+        name="url"
+        type="text"
+        inputmode="url"
+        autocomplete="url"
+        placeholder="https://example.com"
+        data-input
+      >
+      <button type="submit" data-submit>늘리기</button>
+    </form>
+
+    <p class="message" aria-live="polite" data-message></p>
+
+    <section class="result" data-result hidden>
+      <a href="#" target="_blank" rel="noreferrer" data-result-url></a>
+      <button type="button" data-copy>복사</button>
+    </section>
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

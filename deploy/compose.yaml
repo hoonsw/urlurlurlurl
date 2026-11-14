@@ -1,0 +1,19 @@
+services:
+  web:
+    image: ${APP_IMAGE:?set APP_IMAGE}
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:18766}
+      DATA_DIR: /data
+      BIND: 0.0.0.0
+    ports:
+      - "127.0.0.1:${HOST_PORT:-18766}:8080"
+    volumes:
+      - links:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+volumes:
+  links:
