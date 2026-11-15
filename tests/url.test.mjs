@@ -23,6 +23,13 @@ test("normalizes bare domains to https", () => {
   );
 });
 
+test("preserves query and fragment when normalizing a bare domain path to https", () => {
+  assert.equal(
+    normalizeSubmittedUrl("example.com/path?q=1#section", serviceUrl),
+    "https://example.com/path?q=1#section"
+  );
+});
+
 test("allows http and https urls", () => {
   assert.equal(normalizeSubmittedUrl("http://example.com", serviceUrl), "http://example.com/");
   assert.equal(normalizeSubmittedUrl("https://example.com", serviceUrl), "https://example.com/");
