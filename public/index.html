@@ -9,11 +9,11 @@
 </head>
 <body>
   <main class="page">
-    <h1>urlurlurlurl</h1>
-    <p class="tagline">URL을 늘립니다.</p>
+    <h1 aria-label="urlurlurlurl"><span>url</span><span>url</span><span>url</span><span>url</span></h1>
+    <p class="tagline">짧은 주소를 길게 늘립니다.</p>
 
     <form class="form" data-form>
-      <label class="sr-only" for="url">URL</label>
+      <label for="url">원본 주소</label>
       <input
         id="url"
         name="url"
@@ -23,7 +23,7 @@
         placeholder="https://example.com"
         data-input
       >
-      <button type="submit" data-submit>늘리기</button>
+      <button type="submit" data-submit>늘리기 <span aria-hidden="true">⟶</span></button>
     </form>
 
     <p class="message" aria-live="polite" data-message></p>
