@@ -7,6 +7,7 @@ const message = document.querySelector("[data-message]");
 const result = document.querySelector("[data-result]");
 const resultUrl = document.querySelector("[data-result-url]");
 const copyButton = document.querySelector("[data-copy]");
+const manualCopy = document.querySelector("[data-manual-copy]");
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -40,18 +41,42 @@ form.addEventListener("submit", async (event) => {
 
 copyButton.addEventListener("click", async () => {
   const url = resultUrl.href;
-
-  try {
-    await navigator.clipboard.writeText(url);
-    copyButton.textContent = "복사됨";
-  } catch {
-    setMessage(url);
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(url);
+      showCopied();
+      return;
+    } catch {
+      // A browser may reject the clipboard permission even on HTTPS.
+    }
   }
 
+  manualCopy.hidden = false;
+  manualCopy.value = url;
+  manualCopy.focus();
+  manualCopy.select();
+  manualCopy.setSelectionRange(0, url.length);
+  try {
+    if (document.execCommand("copy")) {
+      copyButton.focus();
+      showCopied();
+      return;
+    }
+  } catch {
+    // Keep the selected, read-only address available for manual copying.
+  }
+  copyButton.textContent = "복사";
+  setMessage("주소가 선택되었습니다. 기기의 복사 메뉴를 사용하세요.");
+});
+
+function showCopied() {
+  manualCopy.hidden = true;
+  setMessage("주소를 복사했습니다.");
+  copyButton.textContent = "복사됨";
   window.setTimeout(() => {
     copyButton.textContent = "복사";
   }, 1200);
-});
+}
 
 function showResult(url) {
   resultUrl.href = url;
@@ -61,6 +86,8 @@ function showResult(url) {
 
 function hideResult() {
   result.hidden = true;
+  manualCopy.hidden = true;
+  manualCopy.value = "";
   resultUrl.removeAttribute("href");
   resultUrl.textContent = "";
 }
