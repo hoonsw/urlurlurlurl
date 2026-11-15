@@ -40,7 +40,7 @@ test("NAS stores a new link and serves it after restarting with the same volume"
     const response = await fetch(server.origin + "/api/extend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: "example.org/article" })
+      body: JSON.stringify({ url: "example.org/article?q=1#section" })
     });
     assert.equal(response.status, 201);
     const { url } = await response.json();
@@ -51,7 +51,7 @@ test("NAS stores a new link and serves it after restarting with the same volume"
     server = await startServer(directory);
     const link = await fetch(server.origin + new URL(url).pathname, { redirect: "manual" });
     assert.equal(link.status, 302);
-    assert.equal(link.headers.get("location"), "https://example.org/article");
+    assert.equal(link.headers.get("location"), "https://example.org/article?q=1#section");
     assert.equal((await fetch(server.origin + "/missing")).status, 404);
   } finally {
     if (server) await server.stop();
